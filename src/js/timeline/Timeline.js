@@ -34,10 +34,18 @@ function make_keydown_handler(timeline) {
         if (keyName == 'ArrowLeft') {
             if (currentSlide != firstSlide) {
                 timeline.goToPrev();
+                event.preventDefault()
             }
         } else if (keyName == 'ArrowRight') {
             if (currentSlide != lastSlide) {
                 timeline.goToNext();
+                event.preventDefault()
+            }
+        } else if (keyName == 'Tab') {
+            console.log('tab received')
+            if (timeline.containsElement(document.activeElement)) {
+                timeline.handleTab(event.getModifierState('Shift'))
+                event.preventDefault()
             }
         }
     }
@@ -60,7 +68,7 @@ class Timeline {
         }
         this.ready = false;
         this._el = {
-            container: DOM.get(elem),
+            container: this._initContainer(elem),
             storyslider: {},
             timenav: {},
             menubar: {}
@@ -788,10 +796,10 @@ class Timeline {
         if (this.config.title) {
             if (n == 0) {
                 this.goToId(this.config.title.unique_id);
-            } else {
+            } else if (n > 0) {
                 this.goToId(this.config.events[n - 1].unique_id);
             }
-        } else {
+        } else if (n >= 0) {
             this.goToId(this.config.events[n].unique_id);
         }
     }
@@ -827,7 +835,7 @@ class Timeline {
         var n = this._getEventIndex(unique_id);
         var d = this.config.events[n];
 
-        this._storyslider.createSlide(d, this.config.title ? n + 1 : n);
+        this._storyslider.createSlide(d, false, this.config.title ? n + 1 : n);
         this._storyslider._updateDrawSlides();
 
         this._timenav.createMarker(d, n);
@@ -937,7 +945,24 @@ class Timeline {
         }
     }
 
+    _initContainer(el) {
+        let elem = DOM.get(el)
+        elem.tabIndex = 0
+        return elem
+    }
 
+    /**
+     * Is the given DOM element (Node) inside this timeline?
+     * @param {Node} el 
+     * @returns true if the argument is a child of the timeline or is the timeline's outer element.
+     */
+    containsElement(el) {
+        return this._el.container.contains(el)
+    }
+
+    handleTab(shiftPressed) {
+        console.log(`handleTab and shift: ${shiftPressed}`)
+    }
 }
 
 classMixin(Timeline, I18NMixins, Events)
